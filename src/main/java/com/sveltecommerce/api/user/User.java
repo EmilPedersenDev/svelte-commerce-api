@@ -1,6 +1,8 @@
 package com.sveltecommerce.api.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sveltecommerce.api.productOrder.ProductOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -16,12 +18,31 @@ public class User {
     @NotEmpty(message = "The name cannot be empty")
     private String name;
 
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonManagedReference
+    List<ProductOrder> productOrders;
+
     public User() {
     }
 
     public User(long id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public User(long id, String name, List<ProductOrder> productOrders) {
+        this.id = id;
+        this.name = name;
+        this.productOrders = productOrders;
+    }
+
+    public List<ProductOrder> getProductOrders() {
+        return productOrders;
+    }
+
+    public void setProductOrders(List<ProductOrder> productOrders) {
+        this.productOrders = productOrders;
     }
 
     public long getId() {

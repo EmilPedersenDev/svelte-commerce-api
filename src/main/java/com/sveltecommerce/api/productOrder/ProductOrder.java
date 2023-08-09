@@ -1,7 +1,9 @@
 package com.sveltecommerce.api.productOrder;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sveltecommerce.api.orderItem.OrderItem;
 import com.sveltecommerce.api.user.User;
 import jakarta.persistence.CascadeType;
@@ -28,8 +30,8 @@ public class ProductOrder {
     private String status;
 
     @OneToMany(mappedBy = "productOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<OrderItem> orderItems;
+    @JsonIgnoreProperties({"productOrder", "hibernateLazyInitializer", "handler"})
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)

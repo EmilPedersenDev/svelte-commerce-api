@@ -31,13 +31,11 @@ public class ProductItem {
 
     private int quantity;
     private String size;
-
     private String color;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("orderItem")
-    @JsonBackReference
-    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"orderItem", "productItems", "hibernateLazyInitializer", "handler"})
+    @JoinColumn(name = "product_id")
     private Product product;
 
     @Column(name="product_id", insertable=false, updatable=false)
@@ -48,7 +46,6 @@ public class ProductItem {
     private List<ProductImage> productImages;
 
     @OneToMany(mappedBy = "productItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private List<OrderItem> orderItem;
 
     public ProductItem() {
@@ -62,6 +59,14 @@ public class ProductItem {
         this.product = product;
         this.productImages = productImages;
         this.orderItem = orderItem;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     public long getProductId() {

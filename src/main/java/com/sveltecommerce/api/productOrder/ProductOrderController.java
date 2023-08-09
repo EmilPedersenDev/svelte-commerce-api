@@ -6,8 +6,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,21 +50,29 @@ public class ProductOrderController {
         this.logger = LoggerFactory.getLogger(ProductOrderController.class);
     }
 
+    @GetMapping
+    @Produces(APPLICATION_JSON)
+    public ResponseEntity<List<ProductOrder>> getPorductOrders() {
+        try {
+            List<ProductOrder> productOrders = repository.findAll();
+            return new ResponseEntity<>(productOrders, HttpStatus.OK);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        }
+    }
+
     @GetMapping("/{id}")
     @Produces(APPLICATION_JSON)
     public ResponseEntity<ProductOrder> getOrder(@PathVariable long id, @NotNull @RequestParam String status) {
-        if(id < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No valid id");
-        }
-
-        List<ProductOrder> productOrders = repository.findByUserIdAndStatus(id, status);
-
-        ProductOrder pendingProductOrder = productOrders.stream().filter(order -> order.getStatus().equals(ProductOrderStatus.PENDING.status)).findFirst().orElse(null);
-
-        if(pendingProductOrder != null) {
+        try {
+            if(id < 0) {
+                throw new RuntimeException("No valid id");
+            }
+            List<ProductOrder> productOrders = repository.findByUserIdAndStatus(id, status);
+            ProductOrder pendingProductOrder = productOrders.stream().filter(order -> order.getStatus().equals(ProductOrderStatus.PENDING.status)).findFirst().orElse(null);
             return new ResponseEntity<>(pendingProductOrder, HttpStatus.OK);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find an order by the provided id");
+        } catch(Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         }
     }
 
@@ -84,5 +94,4 @@ public class ProductOrderController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save order");
         }
     }
-
 }

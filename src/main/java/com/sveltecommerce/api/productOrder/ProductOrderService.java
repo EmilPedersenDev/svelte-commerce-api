@@ -8,6 +8,7 @@ import com.sveltecommerce.api.productItem.ProductItem;
 import com.sveltecommerce.api.productItem.ProductItemRepository;
 import com.sveltecommerce.api.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -35,11 +36,15 @@ public class ProductOrderService {
 
     public ProductOrder createOrder(CreateProductOrderRequest productOrderRequest) throws RuntimeException {
         ProductItem productItemReq = productOrderRequest.getProductItem();
-        ProductOrder currentProductOrderReq = productOrderRequest.getCurrentProductOrder();
 
         // Temporary user for testing purposes
         User testUser = new User(productOrderRequest.getUserId(), "Emil Pedersen");
-        ProductOrder productOrder = Objects.requireNonNullElseGet(currentProductOrderReq, () -> new ProductOrder(ProductOrderStatus.PENDING.status, productOrderRequest.getUserId()));
+        ProductOrder pendingProductOrder = getPendingProductOrder(testUser.getId());
+
+       if(pendingProductOrder == null) {
+            pendingProductOrder = new ProductOrder(ProductOrderStatus.PENDING.status, productOrderRequest.getUserId());
+            repository.save(pendingProductOrder);
+        }
 
         Optional<ProductItem> savedProductItem = productItemRepository.findById(productItemReq.getId());
 
@@ -47,15 +52,13 @@ public class ProductOrderService {
         int productItemQuantity = getProductItemQuantity(savedProductItem, productItemReq);
         savedProductItem.ifPresent(item -> item.setQuantity(productItemQuantity));
 
-        if(currentProductOrderReq == null) {
-            repository.save(productOrder);
+        OrderItem newOrderItem = createOrderItem(productItemReq, pendingProductOrder);
+        if(newOrderItem != null) {
+            pendingProductOrder.addOrderItem(newOrderItem);
         }
-
-        OrderItem newOrderItem = createOrderItem(productItemReq, productOrder);
-        productOrder.addOrderItem(newOrderItem);
         updateProductItem(savedProductItem);
 
-        return productOrder;
+        return pendingProductOrder;
     }
 
     private OrderItem createOrderItem(ProductItem productItemReq, ProductOrder productOrderReq) throws RuntimeException {
@@ -76,11 +79,11 @@ public class ProductOrderService {
 
         if(savedOrderItem.isPresent()) {
             savedOrderItem.get().setQuantity(savedOrderItem.get().getQuantity() + productItemReq.getQuantity());
-            BigDecimal orderItemPrice = productPrice.add(new BigDecimal(savedOrderItem.get().getQuantity()));
+            BigDecimal orderItemPrice = productPrice.multiply(new BigDecimal(productItemReq.getQuantity()));
             savedOrderItem.get().addPrice(orderItemPrice);
-            newOrderItem = orderItemRepository.save(savedOrderItem.get());
+            orderItemRepository.save(savedOrderItem.get());
         } else {
-            OrderItem orderItem = new OrderItem(productItemReq.getQuantity(), productItemReq, productOrderReq, productPrice.add(new BigDecimal(productItemReq.getQuantity())));
+            OrderItem orderItem = new OrderItem(productItemReq.getQuantity(), productItemReq, productOrderReq, productPrice.multiply(new BigDecimal(productItemReq.getQuantity())));
             newOrderItem = orderItemRepository.save(orderItem);
         }
 
@@ -102,5 +105,11 @@ public class ProductOrderService {
         } else {
             throw new RuntimeException("ProductItem is out of stock");
         }
+    }
+
+    private ProductOrder getPendingProductOrder(long userId) {
+        List<ProductOrder> pendingProductOrders = repository.findByUserIdAndStatus(userId, ProductOrderStatus.PENDING.status);
+        Optional<ProductOrder> pendingProductOrder = pendingProductOrders.stream().filter(order -> order.getStatus().equals(ProductOrderStatus.PENDING.status)).findFirst();
+        return pendingProductOrder.orElse(null);
     }
 }

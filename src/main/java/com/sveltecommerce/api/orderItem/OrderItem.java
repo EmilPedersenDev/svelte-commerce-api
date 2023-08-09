@@ -30,10 +30,11 @@ public class OrderItem {
     @ManyToOne
     @JsonIgnoreProperties("orderItems")
     @JoinColumn(name = "product_order_id")
+    @JsonIgnore
     private ProductOrder productOrder;
 
     @ManyToOne
-    @JsonIgnoreProperties("orderItem")
+    @JsonIgnoreProperties({"orderItem", "productItem", "hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "product_item_id")
     private ProductItem productItem;
 
@@ -55,11 +56,11 @@ public class OrderItem {
     }
 
     public BigDecimal getPrice() {
-        return price;
+        return this.price;
     }
 
     public void setPrice(BigDecimal price) {
-       this.price = price;
+        this.price = price;
     }
 
     public void addPrice(BigDecimal price) {
@@ -80,6 +81,19 @@ public class OrderItem {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+    public void incrementQuantity(BigDecimal productPrice) {
+        BigDecimal totalPrice = this.price.add(productPrice);
+        setPrice(totalPrice);
+        this.quantity++;
+    }
+
+    public void decrementQuantity(BigDecimal productPrice) {
+        if(this.quantity > 0) {
+            BigDecimal totalPrice = this.price.subtract(productPrice);
+            setPrice(totalPrice);
+            this.quantity--;
+        }
     }
 
     public ProductOrder getProductOrder() {

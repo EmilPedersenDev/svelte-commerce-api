@@ -1,6 +1,7 @@
 package com.sveltecommerce.api.company;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sveltecommerce.api.product.Product;
 import com.sveltecommerce.api.productImage.ProductImage;
 import jakarta.persistence.CascadeType;
@@ -23,6 +24,7 @@ public class Company {
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @JsonManagedReference
     private List<Product> products;
 
     public Company() {
@@ -47,5 +49,13 @@ public class Company {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<Product> products) {
+        this.products = products;
     }
 }

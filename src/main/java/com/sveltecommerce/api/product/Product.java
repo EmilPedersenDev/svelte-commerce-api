@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sveltecommerce.api.company.Company;
 import com.sveltecommerce.api.productItem.ProductItem;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -34,7 +33,6 @@ public class Product {
 
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    @JsonManagedReference
     private List<ProductItem> productItems;
 
     public Product() {
@@ -87,5 +85,25 @@ public class Product {
 
     public void setProductItems(List<ProductItem> productItems) {
         this.productItems = productItems;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", price=" + price +
+                ", sex='" + sex + '\'' +
+                ", company=" + company +
+                ", productItems=" + productItems +
+                '}';
     }
 }

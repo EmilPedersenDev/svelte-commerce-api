@@ -6,8 +6,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +27,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
+@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600)
 @RestController
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @RequestMapping("${apiVersion}" + "productOrders")
@@ -38,6 +42,7 @@ public class ProductOrderController {
 
   private final Logger logger;
 
+  @Autowired
   public ProductOrderController(ProductOrderRepository repository, OrderItemRepository orderItemRepository, ProductItemRepository productItemRepository, ProductOrderService productOrderService) {
     this.repository = repository;
     this.orderItemRepository = orderItemRepository;
@@ -115,6 +120,17 @@ public class ProductOrderController {
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save order");
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  @Produces(APPLICATION_JSON)
+  public ResponseEntity<String> deleteOrderById(@PathVariable long id) {
+    try {
+      repository.deleteById(id);
+      return new ResponseEntity<>("Order with id: " + id + " was deleted.", HttpStatus.OK);
+    } catch (Exception ex) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not delete order");
     }
   }
 }

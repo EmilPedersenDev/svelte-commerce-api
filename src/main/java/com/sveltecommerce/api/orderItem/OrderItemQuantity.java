@@ -9,34 +9,33 @@ import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OrderItemQuantity implements Serializable {
-    @JsonProperty
-    @NotNull
-    private String type;
-    @JsonProperty
-    @Min(value = 0, message = "orderItemId must be a positive integer")
-    private long orderItemId;
+  @JsonProperty
+  @NotNull
+  private String type;
+  @JsonProperty
+  private OrderItem orderItem;
 
-    public OrderItemQuantity() {
-    }
+  public OrderItemQuantity() {
+  }
 
-    public OrderItemQuantity(String type, long orderItemId) {
-        this.type = type;
-        this.orderItemId = orderItemId;
-    }
+  public OrderItemQuantity(String type, OrderItem orderItem) {
+    this.type = type;
+    this.orderItem = orderItem;
+  }
 
-    public String getType() {
-        return type;
-    }
+  public String getType() {
+    return type;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+  public void setType(String type) {
+    this.type = type;
+  }
 
-    public long getOrderItemId() {
-        return orderItemId;
-    }
+  public OrderItem getOrderItem() {
+    return orderItem;
+  }
 
-    public void setOrderItemId(long orderItemId) {
-        this.orderItemId = orderItemId;
-    }
+  public void setOrderItem(OrderItem orderItem) {
+    this.orderItem = orderItem;
+  }
 }

@@ -56,15 +56,8 @@ public class ProductOrderService {
 
     Optional<ProductItem> savedProductItem = productItemRepository.findById(productItemReq.getId());
 
-    // The stock of the productItem needs to be reduced when creating a new order
-    int productItemQuantity = getProductItemQuantity(savedProductItem, productItemReq);
-    savedProductItem.ifPresent(item -> item.setQuantity(productItemQuantity));
-
     OrderItem newOrderItem = createOrderItem(productItemReq, pendingProductOrder);
-    if (newOrderItem != null) {
-      pendingProductOrder.addOrderItem(newOrderItem);
-    }
-    updateProductItem(savedProductItem);
+    orderItemRepository.save(newOrderItem);
 
     return pendingProductOrder;
   }
@@ -74,7 +67,7 @@ public class ProductOrderService {
     Optional<OrderItem> savedOrderItem = savedOrderItems.stream().filter(item -> item.getProductOrder().getId() == productOrderReq.getId()).findFirst();
 
     // We only want to update the quantity when the savedOrderItem already exists
-    OrderItem newOrderItem = null;
+
 
     Optional<Product> product = productRepository.findById(productItemReq.getProductId());
     BigDecimal productPrice = null;
@@ -90,18 +83,15 @@ public class ProductOrderService {
       BigDecimal orderItemPrice = productPrice.multiply(new BigDecimal(productItemReq.getQuantity()));
       savedOrderItem.get().addPrice(orderItemPrice);
       orderItemRepository.save(savedOrderItem.get());
+      return savedOrderItem.get();
     } else {
+      OrderItem newOrderItem = null;
       OrderItem orderItem = new OrderItem(productItemReq.getQuantity(), productItemReq, productOrderReq, productPrice.multiply(new BigDecimal(productItemReq.getQuantity())));
+      productOrderReq.addOrderItem(orderItem);
       newOrderItem = orderItemRepository.save(orderItem);
+      return newOrderItem;
     }
-
-    return newOrderItem;
   }
-
-  private void updateProductItem(Optional<ProductItem> savedProductItem) {
-    savedProductItem.ifPresent(newProductItem -> productItemRepository.save(savedProductItem.get()));
-  }
-
 
   private int getProductItemQuantity(Optional<ProductItem> savedProductItem, ProductItem productItemReq) throws RuntimeException {
     if (savedProductItem.isPresent() && savedProductItem.get().getQuantity() > 0) {
@@ -124,7 +114,7 @@ public class ProductOrderService {
   public String checkoutStripe(ProductOrder productOrder) throws StripeException {
     // Check quantity here to be able to cancel the order before paying
     port(4242);
-    Stripe.apiKey = "STRIPE_API_KEY";
+    Stripe.apiKey = "sk_test_51NdZTbH0MQfguTsOcaBPKAZpsphiYThFcdpB0RReo599Wbr3pamdOJcZ0qVsoTrfx4rMyoFIVCUIX1gRBDU3J3gj00bGAYVx2O";
 
     SessionCreateParams.Builder stripeBuilder =
       SessionCreateParams.builder()
